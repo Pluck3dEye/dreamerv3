@@ -164,3 +164,12 @@ debug:
     .*\.hidden: 3
     .*\.blocks: 4
     .*\.depth: 2
+
+highway_merge:
+  task: gym_merge-v0
+  env.gym:
+    imports: [highway_env]
+    obs_key: observation
+    act_key: action
+  run:
+    episode_timeout: 60

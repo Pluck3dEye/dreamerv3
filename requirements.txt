@@ -7,6 +7,8 @@ einops
 elements>=3.19.1
 google-resumable-media>=2.7.2
 granular>=0.20.3
+gymnasium>=0.29.1
+highway-env>=1.8.2
 ipdb
 jax[cuda12]==0.4.33
 jaxtyping

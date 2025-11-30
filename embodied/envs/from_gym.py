@@ -2,8 +2,14 @@ import functools
 
 import elements
 import embodied
-import gym
 import numpy as np
+
+try:
+  import gymnasium as gym
+  _GYMNASIUM = True
+except ImportError:  # pragma: no cover
+  import gym  # type: ignore
+  _GYMNASIUM = False
 
 
 class FromGym(embodied.Env):
@@ -57,17 +63,29 @@ class FromGym(embodied.Env):
   def step(self, action):
     if action['reset'] or self._done:
       self._done = False
-      obs = self._env.reset()
+      self._info = {}
+      result = self._env.reset()
+      if isinstance(result, tuple) and len(result) == 2:
+        obs, self._info = result
+      else:
+        obs = result
       return self._obs(obs, 0.0, is_first=True)
     if self._act_dict:
       action = self._unflatten(action)
     else:
       action = action[self._act_key]
-    obs, reward, self._done, self._info = self._env.step(action)
+    result = self._env.step(action)
+    if len(result) == 5:
+      obs, reward, terminated, truncated, self._info = result
+      self._done = bool(terminated or truncated)
+      is_terminal = self._info.get('is_terminal', terminated)
+    else:
+      obs, reward, self._done, self._info = result
+      is_terminal = self._info.get('is_terminal', self._done)
     return self._obs(
         obs, reward,
         is_last=bool(self._done),
-        is_terminal=bool(self._info.get('is_terminal', self._done)))
+        is_terminal=bool(is_terminal))
 
   def _obs(
       self, obs, reward, is_first=False, is_last=False, is_terminal=False):

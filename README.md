@@ -74,6 +74,15 @@ python dreamerv3/main.py \
   --run.train_ratio 32
 ```
 
+Highway merge training (requires `gymnasium` and `highway-env`):
+
+```sh
+python dreamerv3/main.py \
+  --logdir ~/logdir/dreamer/{timestamp} \
+  --configs highway_merge \
+  --run.train_ratio 32
+```
+
 To reproduce results, train on the desired task using the corresponding config,
 such as `--configs atari --task atari_pong`.
 
