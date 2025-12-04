@@ -15,6 +15,28 @@ import numpy as np
 import portal
 import ruamel.yaml as yaml
 
+# Fix for Windows path handling bugs in elements library
+# The elements.path module doesn't handle mixed forward/backslashes properly on Windows
+if sys.platform == 'win32':
+  _original_path_init = elements.path.Path.__init__
+  
+  def _patched_path_init(self, path):
+    # Normalize all paths to forward slashes on Windows
+    if isinstance(path, str):
+      path = path.replace('\\', '/')
+    elif hasattr(path, '_path'):
+      path = path._path.replace('\\', '/')
+    _original_path_init(self, path)
+  
+  def _patched_path_name(self):
+    p = self._path.replace('\\', '/')
+    if '/' not in p:
+      return p
+    return p.rsplit('/', 1)[1]
+  
+  elements.path.Path.__init__ = _patched_path_init
+  elements.path.Path.name = property(_patched_path_name)
+
 
 def main(argv=None):
   from .agent import Agent
@@ -227,6 +249,8 @@ def make_env(config, index, **overrides):
     ctor = getattr(module, cls)
   kwargs = config.env.get(suite, {})
   kwargs.update(overrides)
+  for module in kwargs.pop('imports', []):
+    importlib.import_module(module)
   if kwargs.pop('use_seed', False):
     kwargs['seed'] = hash((config.seed, index)) % (2 ** 32 - 1)
   if kwargs.pop('use_logdir', False):
